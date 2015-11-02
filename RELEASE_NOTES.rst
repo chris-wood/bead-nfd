@@ -1,1 +1,1 @@
-docs/release-notes-latest.rst
+docs/RELEASE_NOTES.rst

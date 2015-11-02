@@ -52,6 +52,13 @@ public:
   typedef std::map<std::pair<std::string, ethernet::Address>,
                    shared_ptr<EthernetFace>> MulticastFaceMap;
 
+  // from ProtocolFactory
+  virtual void
+  createFace(const FaceUri& uri,
+             ndn::nfd::FacePersistency persistency,
+             const FaceCreatedCallback& onCreated,
+             const FaceConnectFailedCallback& onConnectFailed) DECL_OVERRIDE;
+
   /**
    * \brief Create an EthernetFace to communicate with the given multicast group
    *
@@ -77,22 +84,17 @@ public:
   const MulticastFaceMap&
   getMulticastFaces() const;
 
-public: // from ProtocolFactory
-  virtual void
-  createFace(const FaceUri& uri,
-             ndn::nfd::FacePersistency persistency,
-             const FaceCreatedCallback& onCreated,
-             const FaceCreationFailedCallback& onConnectFailed) DECL_OVERRIDE;
-
-  virtual std::vector<shared_ptr<const Channel>>
-  getChannels() const DECL_OVERRIDE;
+  virtual std::list<shared_ptr<const Channel>>
+  getChannels() const;
 
 private:
   /**
    * \brief Look up EthernetFace using specified interface and address
    *
-   * \returns shared pointer to the existing EthernetFace object
-   *          or nullptr when such face does not exist
+   * \returns shared pointer to the existing EthernetFace object or
+   *          empty shared pointer when such face does not exist
+   *
+   * \throws never
    */
   shared_ptr<EthernetFace>
   findMulticastFace(const std::string& interfaceName,

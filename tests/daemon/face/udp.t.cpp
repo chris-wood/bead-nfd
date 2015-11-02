@@ -24,6 +24,7 @@
  */
 
 #include "face/udp-channel.hpp"
+#include "face/udp-face.hpp"
 #include "face/udp-factory.hpp"
 
 #include "core/network-interface.hpp"
@@ -34,26 +35,29 @@
 namespace nfd {
 namespace tests {
 
-BOOST_AUTO_TEST_SUITE(Face)
-BOOST_FIXTURE_TEST_SUITE(TestUdp, BaseFixture)
-
-using nfd::Face;
+BOOST_FIXTURE_TEST_SUITE(FaceUdp, BaseFixture)
 
 BOOST_AUTO_TEST_CASE(GetChannels)
 {
   UdpFactory factory;
   BOOST_REQUIRE_EQUAL(factory.getChannels().empty(), true);
 
-  std::vector<shared_ptr<const Channel>> expectedChannels;
+  std::vector<shared_ptr<const Channel> > expectedChannels;
+
   expectedChannels.push_back(factory.createChannel("127.0.0.1", "20070"));
   expectedChannels.push_back(factory.createChannel("127.0.0.1", "20071"));
   expectedChannels.push_back(factory.createChannel("::1", "20071"));
 
-  for (const auto& i : factory.getChannels()) {
-    auto pos = std::find(expectedChannels.begin(), expectedChannels.end(), i);
-    BOOST_REQUIRE(pos != expectedChannels.end());
-    expectedChannels.erase(pos);
-  }
+  std::list<shared_ptr<const Channel> > channels = factory.getChannels();
+  for (std::list<shared_ptr<const Channel> >::const_iterator i = channels.begin();
+       i != channels.end(); ++i)
+    {
+      std::vector<shared_ptr<const Channel> >::iterator pos =
+        std::find(expectedChannels.begin(), expectedChannels.end(), *i);
+
+      BOOST_REQUIRE(pos != expectedChannels.end());
+      expectedChannels.erase(pos);
+    }
 
   BOOST_CHECK_EQUAL(expectedChannels.size(), 0);
 }
@@ -122,7 +126,7 @@ BOOST_FIXTURE_TEST_CASE(ChannelMapUdp, FactoryErrorCheck)
   auto multicastFace1a = factory.createMulticastFace(interfaceIp, "224.0.0.1", "20072");
   BOOST_CHECK_EQUAL(multicastFace1, multicastFace1a);
   BOOST_CHECK_EQUAL(multicastFace1->isLocal(), false);
-  BOOST_CHECK_EQUAL(multicastFace1->getPersistency(), ndn::nfd::FACE_PERSISTENCY_PERMANENT);
+  BOOST_CHECK_EQUAL(multicastFace1->getPersistency(), ndn::nfd::FACE_PERSISTENCY_PERSISTENT);
   BOOST_CHECK_EQUAL(multicastFace1->isMultiAccess(), true);
 
   //same endpoint of a multicast face
@@ -697,8 +701,7 @@ BOOST_FIXTURE_TEST_CASE(Bug2292, FakeNetworkInterfaceFixture)
                }));
 }
 
-BOOST_AUTO_TEST_SUITE_END() // TestUdp
-BOOST_AUTO_TEST_SUITE_END() // Face
+BOOST_AUTO_TEST_SUITE_END()
 
 } // namespace tests
 } // namespace nfd

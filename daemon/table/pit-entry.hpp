@@ -132,10 +132,6 @@ public: // InRecord
   InRecordCollection::const_iterator
   getInRecord(const Face& face) const;
 
-  /// deletes one InRecord for face if exists
-  void
-  deleteInRecord(const Face& face);
-
   /// deletes all InRecords
   void
   deleteInRecords();
@@ -155,8 +151,8 @@ public: // OutRecord
   /** \brief get the OutRecord for face
    *  \return an iterator to the OutRecord, or .end if it does not exist
    */
-  OutRecordCollection::iterator
-  getOutRecord(const Face& face);
+  OutRecordCollection::const_iterator
+  getOutRecord(const Face& face) const;
 
   /// deletes one OutRecord for face if exists
   void

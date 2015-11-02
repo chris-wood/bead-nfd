@@ -1,12 +1,12 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2015,  Regents of the University of California,
- *                           Arizona Board of Regents,
- *                           Colorado State University,
- *                           University Pierre & Marie Curie, Sorbonne University,
- *                           Washington University in St. Louis,
- *                           Beijing Institute of Technology,
- *                           The University of Memphis.
+ * Copyright (c) 2014,  Regents of the University of California,
+ *                      Arizona Board of Regents,
+ *                      Colorado State University,
+ *                      University Pierre & Marie Curie, Sorbonne University,
+ *                      Washington University in St. Louis,
+ *                      Beijing Institute of Technology,
+ *                      The University of Memphis
  *
  * This file is part of NFD (Named Data Networking Forwarding Daemon).
  * See AUTHORS.md for complete list of NFD authors and contributors.
@@ -24,96 +24,120 @@
  */
 
 #include "manager-base.hpp"
+#include "core/logger.hpp"
 
 namespace nfd {
 
-using ndn::mgmt::ValidateParameters;
-using ndn::mgmt::Authorization;
+NFD_LOG_INIT("ManagerBase");
 
-ManagerBase::ManagerBase(Dispatcher& dispatcher,
-                         CommandValidator& validator,
-                         const std::string& module)
-  : m_dispatcher(dispatcher)
-  , m_validator(validator)
-  , m_mgmtModuleName(module)
+ManagerBase::ManagerBase(shared_ptr<InternalFace> face, const std::string& privilege,
+                         ndn::KeyChain& keyChain)
+  : m_face(face)
+  , m_keyChain(keyChain)
 {
-  m_validator.addSupportedPrivilege(module);
+  face->getValidator().addSupportedPrivilege(privilege);
 }
 
-void
-ManagerBase::registerStatusDatasetHandler(const std::string& verb,
-                                          const ndn::mgmt::StatusDatasetHandler& handler)
+ManagerBase::~ManagerBase()
 {
-  m_dispatcher.addStatusDataset(makeRelPrefix(verb),
-                                ndn::mgmt::makeAcceptAllAuthorization(),
-                                handler);
-}
 
-ndn::mgmt::PostNotification
-ManagerBase::registerNotificationStream(const std::string& verb)
-{
-  return m_dispatcher.addNotificationStream(makeRelPrefix(verb));
-}
-
-void
-ManagerBase::authorize(const Name& prefix, const Interest& interest,
-                       const ndn::mgmt::ControlParameters* params,
-                       ndn::mgmt::AcceptContinuation accept,
-                       ndn::mgmt::RejectContinuation reject)
-{
-  BOOST_ASSERT(params != nullptr);
-  BOOST_ASSERT(typeid(*params) == typeid(ndn::nfd::ControlParameters));
-
-  m_validator.validate(interest,
-                       bind(&ManagerBase::extractRequester, this, interest, accept),
-                       bind([&] { reject(ndn::mgmt::RejectReply::STATUS403); }));
-}
-
-void
-ManagerBase::extractRequester(const Interest& interest,
-                              ndn::mgmt::AcceptContinuation accept)
-{
-  const Name& interestName = interest.getName();
-
-  try {
-    ndn::SignatureInfo sigInfo(interestName.at(ndn::signed_interest::POS_SIG_INFO).blockFromValue());
-    if (!sigInfo.hasKeyLocator() ||
-        sigInfo.getKeyLocator().getType() != ndn::KeyLocator::KeyLocator_Name) {
-      return accept("");
-    }
-
-    accept(sigInfo.getKeyLocator().getName().toUri());
-  }
-  catch (const tlv::Error&) {
-    accept("");
-  }
 }
 
 bool
-ManagerBase::validateParameters(const nfd::ControlCommand& command, const ndn::mgmt::ControlParameters& parameters)
+ManagerBase::extractParameters(const Name::Component& parameterComponent,
+                               ControlParameters& extractedParameters)
 {
-  BOOST_ASSERT(dynamic_cast<const ControlParameters*>(&parameters) != nullptr);
+  try
+    {
+      Block rawParameters = parameterComponent.blockFromValue();
+      extractedParameters.wireDecode(rawParameters);
+    }
+  catch (const tlv::Error&)
+    {
+      return false;
+    }
 
-  try {
-    command.validateRequest(static_cast<const ControlParameters&>(parameters));
-  }
-  catch (const ControlCommand::ArgumentError&) {
-    return false;
-  }
+  NFD_LOG_DEBUG("Parameters parsed OK");
   return true;
 }
 
 void
-ManagerBase::handleCommand(shared_ptr<nfd::ControlCommand> command,
-                           const ControlCommandHandler& handler,
-                           const Name& prefix, const Interest& interest,
-                           const ndn::mgmt::ControlParameters& params,
-                           ndn::mgmt::CommandContinuation done)
+ManagerBase::sendResponse(const Name& name,
+                          uint32_t code,
+                          const std::string& text)
 {
-  BOOST_ASSERT(dynamic_cast<const ControlParameters*>(&params) != nullptr);
-  ControlParameters parameters = static_cast<const ControlParameters&>(params);
-  command->applyDefaultsToRequest(parameters);
-  handler(*command, prefix, interest, parameters, done);
+  ControlResponse response(code, text);
+  sendResponse(name, response);
+}
+
+void
+ManagerBase::sendResponse(const Name& name,
+                          uint32_t code,
+                          const std::string& text,
+                          const Block& body)
+{
+  ControlResponse response(code, text);
+  response.setBody(body);
+  sendResponse(name, response);
+}
+
+void
+ManagerBase::sendResponse(const Name& name,
+                          const ControlResponse& response)
+{
+  NFD_LOG_DEBUG("responding"
+                << " name: " << name
+                << " code: " << response.getCode()
+                << " text: " << response.getText());
+
+  const Block& encodedControl = response.wireEncode();
+
+  shared_ptr<Data> responseData(make_shared<Data>(name));
+  responseData->setContent(encodedControl);
+
+  m_keyChain.sign(*responseData);
+  m_face->put(*responseData);
+}
+
+void
+ManagerBase::sendNack(const Name& name)
+{
+  NFD_LOG_DEBUG("responding NACK to " << name);
+
+  ndn::MetaInfo meta;
+  meta.setType(tlv::ContentType_Nack);
+
+  shared_ptr<Data> responseData(make_shared<Data>(name));
+  responseData->setMetaInfo(meta);
+
+  m_keyChain.sign(*responseData);
+  m_face->put(*responseData);
+}
+
+bool
+ManagerBase::validateParameters(const ControlCommand& command,
+                                ControlParameters& parameters)
+{
+  try
+    {
+      command.validateRequest(parameters);
+    }
+  catch (const ControlCommand::ArgumentError& error)
+    {
+      return false;
+    }
+
+  command.applyDefaultsToRequest(parameters);
+
+  return true;
+}
+
+void
+ManagerBase::onCommandValidationFailed(const shared_ptr<const Interest>& command,
+                                       const std::string& error)
+{
+  NFD_LOG_DEBUG("command result: unauthorized command: " << *command << " (" << error << ")");
+  sendResponse(command->getName(), 403, "Unauthorized command");
 }
 
 

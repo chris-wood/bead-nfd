@@ -47,6 +47,9 @@ public:
     }
   };
 
+  explicit
+  WebSocketFactory(const std::string& defaultPort);
+
   /**
    * \brief Create WebSocket-based channel using websocket::Endpoint
    *
@@ -73,17 +76,17 @@ public:
    * \throws WebSocketFactory::Error
    */
   shared_ptr<WebSocketChannel>
-  createChannel(const std::string& localIp, const std::string& localPort);
+  createChannel(const std::string& localIp, const std::string& port);
 
-public: // from ProtocolFactory
+  // from ProtocolFactory
   virtual void
   createFace(const FaceUri& uri,
              ndn::nfd::FacePersistency persistency,
              const FaceCreatedCallback& onCreated,
-             const FaceCreationFailedCallback& onConnectFailed) DECL_OVERRIDE;
+             const FaceConnectFailedCallback& onConnectFailed) DECL_OVERRIDE;
 
-  virtual std::vector<shared_ptr<const Channel>>
-  getChannels() const DECL_OVERRIDE;
+  virtual std::list<shared_ptr<const Channel> >
+  getChannels() const;
 
 private:
   /**
@@ -91,12 +94,16 @@ private:
    *
    * \returns shared pointer to the existing WebSocketChannel object
    *          or empty shared pointer when such channel does not exist
+   *
+   * \throws never
    */
   shared_ptr<WebSocketChannel>
-  findChannel(const websocket::Endpoint& endpoint) const;
+  findChannel(const websocket::Endpoint& localEndpoint);
 
-private:
-  std::map<websocket::Endpoint, shared_ptr<WebSocketChannel>> m_channels;
+  typedef std::map< websocket::Endpoint, shared_ptr<WebSocketChannel> > ChannelMap;
+  ChannelMap m_channels;
+
+  std::string m_defaultPort;
 };
 
 } // namespace nfd

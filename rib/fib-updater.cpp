@@ -305,7 +305,8 @@ FibUpdater::onUpdateError(const FibUpdate update,
     }
   }
   else {
-    BOOST_THROW_EXCEPTION(Error("Non-recoverable error: " + error + " code: " + to_string(code)));
+    BOOST_THROW_EXCEPTION(Error("Non-recoverable error: " + error + " code: " +
+                                std::to_string(code)));
   }
 }
 
@@ -333,7 +334,7 @@ FibUpdater::addFibUpdate(FibUpdate update)
 }
 
 void
-FibUpdater::addInheritedRoutes(const RibEntry& entry, const Rib::RouteSet& routesToAdd)
+FibUpdater::addInheritedRoutes(const RibEntry& entry, const Rib::Rib::RouteSet& routesToAdd)
 {
   for (const Route& route : routesToAdd) {
     // Don't add an ancestor faceId if the namespace has an entry for that faceId
@@ -347,7 +348,7 @@ FibUpdater::addInheritedRoutes(const RibEntry& entry, const Rib::RouteSet& route
 }
 
 void
-FibUpdater::addInheritedRoutes(const Name& name, const Rib::RouteSet& routesToAdd,
+FibUpdater::addInheritedRoutes(const Name& name, const Rib::Rib::RouteSet& routesToAdd,
                                const Route& ignore)
 {
   for (const Route& route : routesToAdd) {

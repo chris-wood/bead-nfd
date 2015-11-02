@@ -36,16 +36,15 @@ namespace fw {
 class StrategyInfo
 {
 public:
-#ifdef DOXYGEN
-  /** \return an integer that uniquely identifies this StrategyInfo type
+  /** \fn static constexpr int getTypeId()
+   *  \return an integer that uniquely identifies this StrategyInfo type
    *  \sa http://redmine.named-data.net/projects/nfd/wiki/StrategyInfoType
    */
-  static constexpr int
-  getTypeId()
-  {
-    return <type-identifier>;
-  }
-#endif
+  // static constexpr int
+  // getTypeId()
+  // {
+  //   return <type-identifier>;
+  // }
 
   virtual
   ~StrategyInfo();

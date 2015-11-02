@@ -18,13 +18,6 @@ NFD Documentation
    FAQ
    manpages
 
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-
-   RELEASE_NOTES
-   releases
-
 * :doc:`overview`
 
   A brief overview of NFD and its major modules.
@@ -56,9 +49,7 @@ NFD Documentation
 
 * `API Documentation (doxygen) <doxygen/annotated.html>`_
 
-* :doc:`RELEASE_NOTES`
-
-* :doc:`releases`
+* `Release Notes <RELEASE_NOTES.html>`_
 
 License
 -------

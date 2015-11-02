@@ -68,9 +68,7 @@ public:
   }
 };
 
-/// @cond NoDocumentation
 typedef boost::mpl::if_c<sizeof(size_t) >= 8, Hash64, Hash32>::type CityHash;
-/// @endcond
 
 // Interface of different hash functions
 size_t

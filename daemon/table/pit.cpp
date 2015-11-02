@@ -62,7 +62,7 @@ Pit::~Pit()
 }
 
 std::pair<shared_ptr<pit::Entry>, bool>
-Pit::findOrInsert(const Interest& interest, bool allowInsert)
+Pit::insert(const Interest& interest)
 {
   // first lookup() the Interest Name in the NameTree, which will creates all
   // the intermedia nodes, starting from the shortest prefix.
@@ -78,17 +78,13 @@ Pit::findOrInsert(const Interest& interest, bool allowInsert)
                                   entry->getInterest().getSelectors() == interest.getSelectors();
                          });
   if (it != pitEntries.end()) {
-    return {*it, false};
-  }
-
-  if (!allowInsert) {
-    return {nullptr, true};
+    return { *it, false };
   }
 
   shared_ptr<pit::Entry> entry = make_shared<pit::Entry>(interest);
   nameTreeEntry->insertPitEntry(entry);
   m_nItems++;
-  return {entry, true};
+  return { entry, true };
 }
 
 pit::DataMatchResult

@@ -19,9 +19,6 @@
  * See AUTHORS.md for complete list of ndn-cxx authors and contributors.
  */
 
-#ifndef NFD_TESTS_IDENTITY_MANAGEMENT_FIXTURE_HPP
-#define NFD_TESTS_IDENTITY_MANAGEMENT_FIXTURE_HPP
-
 #include "tests/test-common.hpp"
 #include <ndn-cxx/security/key-chain.hpp>
 #include <vector>
@@ -38,7 +35,7 @@ namespace tests {
  * Identities added via addIdentity method are automatically deleted
  * during test teardown.
  */
-class IdentityManagementFixture : public virtual BaseFixture
+class IdentityManagementFixture : public nfd::tests::BaseFixture
 {
 public:
   IdentityManagementFixture();
@@ -57,5 +54,3 @@ protected:
 
 } // namespace tests
 } // namespace nfd
-
-#endif // NFD_TESTS_IDENTITY_MANAGEMENT_FIXTURE_HPP

@@ -1,12 +1,12 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2015,  Regents of the University of California,
- *                           Arizona Board of Regents,
- *                           Colorado State University,
- *                           University Pierre & Marie Curie, Sorbonne University,
- *                           Washington University in St. Louis,
- *                           Beijing Institute of Technology,
- *                           The University of Memphis.
+ * Copyright (c) 2014,  Regents of the University of California,
+ *                      Arizona Board of Regents,
+ *                      Colorado State University,
+ *                      University Pierre & Marie Curie, Sorbonne University,
+ *                      Washington University in St. Louis,
+ *                      Beijing Institute of Technology,
+ *                      The University of Memphis
  *
  * This file is part of NFD (Named Data Networking Forwarding Daemon).
  * See AUTHORS.md for complete list of NFD authors and contributors.
@@ -27,13 +27,14 @@
 #define NFD_DAEMON_FACE_UDP_CHANNEL_HPP
 
 #include "channel.hpp"
-#include "lp-face-wrapper.hpp"
 
 namespace nfd {
 
 namespace udp {
 typedef boost::asio::ip::udp::endpoint Endpoint;
 } // namespace udp
+
+class UdpFace;
 
 /**
  * \brief Class implementing UDP-based channel to create faces
@@ -58,7 +59,7 @@ public:
    * \brief Enable listening on the local endpoint, accept connections,
    *        and create faces when remote host makes a connection
    * \param onFaceCreated  Callback to notify successful creation of the face
-   * \param onReceiveFailed Callback to notify when channel fails
+   * \param onAcceptFailed Callback to notify when channel fails
    *
    * Once a face is created, if it doesn't send/receive anything for
    * a period of time equal to timeout, it will be destroyed
@@ -91,7 +92,7 @@ public:
   isListening() const;
 
 private:
-  std::pair<bool, shared_ptr<face::LpFaceWrapper>>
+  std::pair<bool, shared_ptr<UdpFace>>
   createFace(const udp::Endpoint& remoteEndpoint, ndn::nfd::FacePersistency persistency);
 
   /**
@@ -105,7 +106,7 @@ private:
                 const ConnectFailedCallback& onReceiveFailed);
 
 private:
-  std::map<udp::Endpoint, shared_ptr<face::LpFaceWrapper>> m_channelFaces;
+  std::map<udp::Endpoint, shared_ptr<UdpFace>> m_channelFaces;
 
   udp::Endpoint m_localEndpoint;
 
