@@ -61,7 +61,6 @@ public:
    *
    *  \param feature The feature. Cannot be LOCAL_CONTROL_FEATURE_ANY
    *                                     or LOCAL_CONTROL_FEATURE_MAX
-   *  \param enabled true/false enable/disable the feature
    */
   void
   setLocalControlHeaderFeature(LocalControlFeature feature, bool enabled = true);
@@ -179,6 +178,12 @@ LocalFace::decodeAndDispatchInput(const Block& element)
         //   }
 
         this->emitSignal(onReceiveData, *d);
+      }
+    else if (payload.type() == tlv::Bead)
+      {
+          shared_ptr<Bead> d = make_shared<Bead>();
+          d->wireDecode(payload);
+          this->emitSignal(onReceiveBead, *d);
       }
     else
       return false;

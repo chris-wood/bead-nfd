@@ -75,9 +75,6 @@ class PriorityFifoPolicy : public Policy
 public:
   PriorityFifoPolicy();
 
-  virtual
-  ~PriorityFifoPolicy();
-
 public:
   static const std::string POLICY_NAME;
 

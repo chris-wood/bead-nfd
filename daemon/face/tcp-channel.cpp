@@ -24,15 +24,14 @@
  */
 
 #include "tcp-channel.hpp"
-#include "generic-link-service.hpp"
-#include "tcp-transport.hpp"
+#include "tcp-face.hpp"
 #include "core/global-io.hpp"
 
 namespace nfd {
 
 NFD_LOG_INIT("TcpChannel");
 
-namespace ip = boost::asio::ip;
+using namespace boost::asio;
 
 TcpChannel::TcpChannel(const tcp::Endpoint& localEndpoint)
   : m_localEndpoint(localEndpoint)
@@ -95,21 +94,24 @@ TcpChannel::size() const
 }
 
 void
-TcpChannel::createFace(ip::tcp::socket&& socket,
+TcpChannel::createFace(ip::tcp::socket socket,
                        const FaceCreatedCallback& onFaceCreated,
                        bool isOnDemand)
 {
-  shared_ptr<face::LpFaceWrapper> face;
+  shared_ptr<Face> face;
   tcp::Endpoint remoteEndpoint = socket.remote_endpoint();
 
   auto it = m_channelFaces.find(remoteEndpoint);
   if (it == m_channelFaces.end()) {
-    auto persistency = isOnDemand ? ndn::nfd::FACE_PERSISTENCY_ON_DEMAND
-                                  : ndn::nfd::FACE_PERSISTENCY_PERSISTENT;
-    auto linkService = make_unique<face::GenericLinkService>();
-    auto transport = make_unique<face::TcpTransport>(std::move(socket), persistency);
-    auto lpFace = make_unique<face::LpFace>(std::move(linkService), std::move(transport));
-    face = make_shared<face::LpFaceWrapper>(std::move(lpFace));
+    tcp::Endpoint localEndpoint = socket.local_endpoint();
+
+    if (localEndpoint.address().is_loopback() &&
+        remoteEndpoint.address().is_loopback())
+      face = make_shared<TcpLocalFace>(FaceUri(remoteEndpoint), FaceUri(localEndpoint),
+                                       std::move(socket), isOnDemand);
+    else
+      face = make_shared<TcpFace>(FaceUri(remoteEndpoint), FaceUri(localEndpoint),
+                                  std::move(socket), isOnDemand);
 
     face->onFail.connectSingleShot([this, remoteEndpoint] (const std::string&) {
       NFD_LOG_TRACE("Erasing " << remoteEndpoint << " from channel face map");

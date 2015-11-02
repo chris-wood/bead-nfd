@@ -1,12 +1,12 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2015,  Regents of the University of California,
- *                           Arizona Board of Regents,
- *                           Colorado State University,
- *                           University Pierre & Marie Curie, Sorbonne University,
- *                           Washington University in St. Louis,
- *                           Beijing Institute of Technology,
- *                           The University of Memphis.
+ * Copyright (c) 2014,  Regents of the University of California,
+ *                      Arizona Board of Regents,
+ *                      Colorado State University,
+ *                      University Pierre & Marie Curie, Sorbonne University,
+ *                      Washington University in St. Louis,
+ *                      Beijing Institute of Technology,
+ *                      The University of Memphis
  *
  * This file is part of NFD (Named Data Networking Forwarding Daemon).
  * See AUTHORS.md for complete list of NFD authors and contributors.
@@ -29,14 +29,26 @@
 #include "face.hpp"
 
 namespace nfd {
-namespace face {
 
-/** \return a Face that has no underlying transport and drops every packet
+/**
+ * \brief a Face that has no underlying transport and drops every packet
  */
-shared_ptr<Face>
-makeNullFace(const FaceUri& uri = FaceUri("null://"));
+class NullFace : public Face
+{
+public:
+  explicit
+  NullFace(const FaceUri& uri = FaceUri("null://"));
 
-} // namespace face
+  void
+  sendInterest(const Interest& interest) DECL_OVERRIDE;
+
+  void
+  sendData(const Data& data) DECL_OVERRIDE;
+
+  void
+  close() DECL_OVERRIDE;
+};
+
 } // namespace nfd
 
 #endif // NFD_DAEMON_FACE_NULL_FACE_HPP

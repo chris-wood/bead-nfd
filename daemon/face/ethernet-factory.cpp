@@ -38,7 +38,7 @@ EthernetFactory::createMulticastFace(const NetworkInterfaceInfo& interface,
   if (!address.isMulticast())
     BOOST_THROW_EXCEPTION(Error(address.toString() + " is not a multicast address"));
 
-  auto face = findMulticastFace(interface.name, address);
+  shared_ptr<EthernetFace> face = findMulticastFace(interface.name, address);
   if (face)
     return face;
 
@@ -49,35 +49,35 @@ EthernetFactory::createMulticastFace(const NetworkInterfaceInfo& interface,
   face->onFail.connectSingleShot([this, key] (const std::string& reason) {
     m_multicastFaces.erase(key);
   });
-  m_multicastFaces[key] = face;
+  m_multicastFaces.insert({key, face});
 
   return face;
-}
-
-void
-EthernetFactory::createFace(const FaceUri& uri,
-                            ndn::nfd::FacePersistency persistency,
-                            const FaceCreatedCallback& onCreated,
-                            const FaceCreationFailedCallback& onConnectFailed)
-{
-  BOOST_THROW_EXCEPTION(Error("EthernetFactory does not support 'createFace' operation"));
-}
-
-std::vector<shared_ptr<const Channel>>
-EthernetFactory::getChannels() const
-{
-  return {};
 }
 
 shared_ptr<EthernetFace>
 EthernetFactory::findMulticastFace(const std::string& interfaceName,
                                    const ethernet::Address& address) const
 {
-  auto i = m_multicastFaces.find({interfaceName, address});
-  if (i != m_multicastFaces.end())
-    return i->second;
+  auto it = m_multicastFaces.find({interfaceName, address});
+  if (it != m_multicastFaces.end())
+    return it->second;
   else
-    return nullptr;
+    return {};
+}
+
+void
+EthernetFactory::createFace(const FaceUri& uri,
+                            ndn::nfd::FacePersistency persistency,
+                            const FaceCreatedCallback& onCreated,
+                            const FaceConnectFailedCallback& onConnectFailed)
+{
+  BOOST_THROW_EXCEPTION(Error("EthernetFactory does not support 'createFace' operation"));
+}
+
+std::list<shared_ptr<const Channel>>
+EthernetFactory::getChannels() const
+{
+  return {};
 }
 
 } // namespace nfd

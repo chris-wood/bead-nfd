@@ -32,22 +32,13 @@
 namespace nfd {
 namespace fw {
 
-/** \brief Best Route strategy version 4
+/** \brief Best Route strategy version 3
  *
  *  This strategy forwards a new Interest to the lowest-cost nexthop (except downstream).
  *  After that, if consumer retransmits the Interest (and is not suppressed according to
  *  exponential backoff algorithm), the strategy forwards the Interest again to
  *  the lowest-cost nexthop (except downstream) that is not previously used.
- *  If all nexthops have been used, the strategy starts over with the first nexthop.
- *
- *  This strategy returns Nack to all downstreams with reason NoRoute
- *  if there is no usable nexthop, which may be caused by:
- *  (a) the FIB entry contains no nexthop;
- *  (b) the FIB nexthop happens to be the sole downstream;
- *  (c) the FIB nexthops violate scope.
- *
- *  This strategy returns Nack to all downstreams if all upstreams have returned Nacks.
- *  The reason of the sent Nack equals the least severe reason among received Nacks.
+ *  If all nexthops have been used, the strategy starts over.
  */
 class BestRouteStrategy2 : public Strategy
 {
@@ -55,14 +46,10 @@ public:
   BestRouteStrategy2(Forwarder& forwarder, const Name& name = STRATEGY_NAME);
 
   virtual void
-  afterReceiveInterest(const Face& inFace, const Interest& interest,
+  afterReceiveInterest(const Face& inFace,
+                       const Interest& interest,
                        shared_ptr<fib::Entry> fibEntry,
                        shared_ptr<pit::Entry> pitEntry) DECL_OVERRIDE;
-
-  virtual void
-  afterReceiveNack(const Face& inFace, const lp::Nack& nack,
-                   shared_ptr<fib::Entry> fibEntry,
-                   shared_ptr<pit::Entry> pitEntry) DECL_OVERRIDE;
 
 public:
   static const Name STRATEGY_NAME;

@@ -37,8 +37,7 @@ class PrivilegeHelper
 public:
 
   /** \brief represents a serious seteuid/gid failure
-   *
-   *  This should only be caught by main as part of a graceful program termination.
+   *  \detail This should only be caught by main in as part of a graceful program termination.
    *  \note This is not an std::exception and BOOST_THROW_EXCEPTION should not be used.
    */
   class Error
