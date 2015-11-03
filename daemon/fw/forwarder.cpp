@@ -58,10 +58,45 @@ Forwarder::~Forwarder()
 
 }
 
+std::string
+SHA256HashString(std::string aString) {
+    std::string digest;
+    CryptoPP::SHA256 hash;
+
+    CryptoPP::StringSource foo(aString, true,
+    new CryptoPP::HashFilter(hash,
+      new CryptoPP::Base64Encoder (
+         new CryptoPP::StringSink(digest))));
+
+    return digest;
+}
+
 void
 Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
 {
-    // TODO: implement me
+    uint64_t token = bead.getToken();
+
+    // Compute H(token)
+    std::ostringstream os;
+    os << token;
+    std::string image = SHA256HashString(os.str());
+
+    // Lookup the entry
+    // std::map<std::string,ForwarderHistroyEntry>::iterator it;
+    // it = m_history.find(image);
+    // if (it != m_history.end()) {
+    //     ForwarderHistroyEntry *entry = it->second;
+    //
+    //     for (std::vector<Face>::iterator itr = entry->faces.begin(); itr != entry->faces.end(); ++itr) {
+    //         Face outFace = *itr;
+    //         outFace.sendBead(bead);
+    //     }
+    //
+    //     // Delete the entry!
+    //     m_history.erase(it);
+    // } else {
+    //     // Drop the BEAD...
+    // }
 }
 
 void
@@ -363,6 +398,16 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
     this->setStragglerTimer(pitEntry, true, data.getFreshnessPeriod());
   }
 
+  // Extract the Content Object pre-image
+  uint64_t token = data.getToken();
+
+  // Compute H(token)
+  std::ostringstream os;
+  os << token;
+  std::string image = SHA256HashString(os.str());
+
+  ForwarderHistroyEntry *entry = (ForwarderHistroyEntry *) malloc(sizeof(ForwarderHistroyEntry));
+
   // foreach pending downstream
   for (std::set<shared_ptr<Face> >::iterator it = pendingDownstreams.begin();
       it != pendingDownstreams.end(); ++it) {
@@ -372,6 +417,13 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
     }
     // goto outgoing Data pipeline
     this->onOutgoingData(data, *pendingDownstream);
+    if (token > 0) {
+        entry->faces.push_back(*pendingDownstream);
+    }
+  }
+
+  if (token > 0) {
+    m_history.insert(std::pair<std::string,ForwarderHistroyEntry*>(token, entry));
   }
 }
 

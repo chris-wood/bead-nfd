@@ -47,6 +47,11 @@ class Strategy;
 
 class NullFace;
 
+typedef struct {
+    std::string image;
+    std::vector<Face> faces;
+} ForwarderHistroyEntry;
+
 /** \brief main class of NFD
  *
  *  Forwarder owns all faces and tables, and implements forwarding pipelines.
@@ -225,6 +230,7 @@ private:
   ForwarderCounters m_counters;
 
   FaceTable m_faceTable;
+  std::map<std::string, ForwarderHistroyEntry> m_history;
 
   // tables
   NameTree       m_nameTree;

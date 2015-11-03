@@ -65,6 +65,16 @@ MulticastUdpFace::sendData(const Data& data)
 }
 
 void
+MulticastUdpFace::sendBead(const Bead& bead)
+{
+  NFD_LOG_FACE_TRACE(__func__);
+  /// \todo After this face implements duplicate suppression, onSendData should
+  ///       be emitted only when data is actually sent out. See also #2555
+  this->emitSignal(onSendData, bead);
+  sendBlock(bead.wireEncode());
+}
+
+void
 MulticastUdpFace::sendBlock(const Block& block)
 {
   m_sendSocket.async_send_to(boost::asio::buffer(block.wire(), block.size()), m_multicastGroup,

@@ -46,6 +46,11 @@ NullFace::sendData(const Data& data)
 }
 
 void
+NullFace::sendBead(const Bead& bead)
+{
+}
+
+void
 NullFace::close()
 {
   this->fail("close");

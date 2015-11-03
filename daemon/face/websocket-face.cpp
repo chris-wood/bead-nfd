@@ -62,6 +62,26 @@ WebSocketFace::sendInterest(const Interest& interest)
 }
 
 void
+WebSocketFace::sendBead(const Bead& bead)
+{
+  if (m_closed)
+    return;
+
+  NFD_LOG_FACE_TRACE(__func__);
+
+  this->emitSignal(onSendBead, bead);
+
+  const Block& payload = bead.wireEncode();
+  this->getMutableCounters().getNOutBytes() += payload.size();
+
+  websocketpp::lib::error_code ec;
+  m_server.send(m_handle, payload.wire(), payload.size(),
+                websocketpp::frame::opcode::binary, ec);
+  if (ec)
+    NFD_LOG_FACE_WARN("Failed to send Data: " << ec.message());
+}
+
+void
 WebSocketFace::sendData(const Data& data)
 {
   if (m_closed)

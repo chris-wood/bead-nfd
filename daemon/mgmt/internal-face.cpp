@@ -126,6 +126,12 @@ InternalFace::sendData(const Data& data)
 }
 
 void
+InternalFace::sendBead(const Bead& bead)
+{
+  this->emitSignal(onSendBead, bead);
+}
+
+void
 InternalFace::close()
 {
   BOOST_THROW_EXCEPTION(Error("Internal face cannot be closed"));

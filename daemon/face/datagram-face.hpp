@@ -55,6 +55,9 @@ public:
   sendData(const Data& data) DECL_OVERRIDE;
 
   void
+  sendBead(const Bead& bead) DECL_OVERRIDE;
+
+  void
   close() DECL_OVERRIDE;
 
   void

@@ -144,6 +144,19 @@ EthernetFace::sendData(const Data& data)
 }
 
 void
+EthernetFace::sendBead(const Bead& bead)
+{
+  NFD_LOG_FACE_TRACE(__func__);
+
+  this->emitSignal(onSendBead, bead);
+
+  ndnlp::PacketArray pa = m_slicer->slice(bead.wireEncode());
+  for (const auto& packet : *pa) {
+    sendPacket(packet);
+  }
+}
+
+void
 EthernetFace::close()
 {
   if (!m_pcap)

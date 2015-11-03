@@ -66,6 +66,9 @@ public:
   sendData(const Data& data);
 
   virtual void
+  sendBead(const Bead& bead);
+
+  virtual void
   close();
 
   // Methods implementing AppFace interface. Do not invoke from forwarder.

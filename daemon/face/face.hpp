@@ -82,11 +82,17 @@ public:
   /// fires when a Data is received
   signal::Signal<Face, Data> onReceiveData;
 
+  /// fires when a Data is received
+  signal::Signal<Face, Bead> onReceiveBead;
+
   /// fires when an Interest is sent out
   signal::Signal<Face, Interest> onSendInterest;
 
   /// fires when a Data is sent out
   signal::Signal<Face, Data> onSendData;
+
+  /// fires when a Data is sent out
+  signal::Signal<Face, Bead> onSendBead;
 
   /// fires when face disconnects or fails to perform properly
   signal::Signal<Face, std::string/*reason*/> onFail;
@@ -98,6 +104,10 @@ public:
   /// send a Data
   virtual void
   sendData(const Data& data) = 0;
+
+  /// send a Bead
+  virtual void
+  sendBead(const Bead& bead) = 0;
 
   /** \brief Close the face
    *
@@ -193,8 +203,10 @@ protected:
 
   DECLARE_SIGNAL_EMIT(onReceiveInterest)
   DECLARE_SIGNAL_EMIT(onReceiveData)
+  DECLARE_SIGNAL_EMIT(onReceiveBead)
   DECLARE_SIGNAL_EMIT(onSendInterest)
   DECLARE_SIGNAL_EMIT(onSendData)
+  DECLARE_SIGNAL_EMIT(onSendBead)
 
 private:
   // this method should be used only by the FaceTable
