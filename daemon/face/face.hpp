@@ -204,6 +204,7 @@ protected:
   DECLARE_SIGNAL_EMIT(onReceiveInterest)
   DECLARE_SIGNAL_EMIT(onReceiveData)
   DECLARE_SIGNAL_EMIT(onReceiveBead)
+  
   DECLARE_SIGNAL_EMIT(onSendInterest)
   DECLARE_SIGNAL_EMIT(onSendData)
   DECLARE_SIGNAL_EMIT(onSendBead)

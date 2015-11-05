@@ -31,6 +31,22 @@
 
 #include "utils/ndn-ns3-packet-tag.hpp"
 
+#include <cryptopp/asn.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/des.h>
+#include <cryptopp/files.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/modes.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/pssr.h>
+#include <cryptopp/pwdbased.h>
+#include <cryptopp/rsa.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/eccrypto.h>
+#include <cryptopp/oids.h>
+#include <cryptopp/dsa.h>
+
 #include <boost/random/uniform_int_distribution.hpp>
 
 namespace nfd {
@@ -82,21 +98,20 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
     std::string image = SHA256HashString(os.str());
 
     // Lookup the entry
-    // std::map<std::string,ForwarderHistroyEntry>::iterator it;
-    // it = m_history.find(image);
-    // if (it != m_history.end()) {
-    //     ForwarderHistroyEntry *entry = it->second;
-    //
-    //     for (std::vector<Face>::iterator itr = entry->faces.begin(); itr != entry->faces.end(); ++itr) {
-    //         Face outFace = *itr;
-    //         outFace.sendBead(bead);
-    //     }
-    //
-    //     // Delete the entry!
-    //     m_history.erase(it);
-    // } else {
-    //     // Drop the BEAD...
-    // }
+    for (int i = 0; i < m_history.size(); i++) {
+        nfd::ForwarderHistroyEntry *entry = m_history.at(i);
+        if (image.compare(entry->image) == 0) {
+            for (std::vector<shared_ptr<Face>>::iterator itr = entry->faces.begin(); itr != entry->faces.end(); ++itr) {
+                shared_ptr<Face> outFace = *itr;
+                outFace->sendBead(bead);
+            }
+
+            // Drop it.
+            m_history.erase(m_history.begin() + i);
+
+            break;
+        }
+    }
 }
 
 void
@@ -406,7 +421,7 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
   os << token;
   std::string image = SHA256HashString(os.str());
 
-  ForwarderHistroyEntry *entry = (ForwarderHistroyEntry *) malloc(sizeof(ForwarderHistroyEntry));
+  nfd::ForwarderHistroyEntry *entry = (nfd::ForwarderHistroyEntry *) malloc(sizeof(nfd::ForwarderHistroyEntry));
 
   // foreach pending downstream
   for (std::set<shared_ptr<Face> >::iterator it = pendingDownstreams.begin();
@@ -418,12 +433,12 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
     // goto outgoing Data pipeline
     this->onOutgoingData(data, *pendingDownstream);
     if (token > 0) {
-        entry->faces.push_back(*pendingDownstream);
+        entry->faces.push_back(pendingDownstream);
     }
   }
 
   if (token > 0) {
-    m_history.insert(std::pair<std::string,ForwarderHistroyEntry*>(token, entry));
+    m_history.push_back(entry);
   }
 }
 

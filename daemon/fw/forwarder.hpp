@@ -49,7 +49,7 @@ class NullFace;
 
 typedef struct {
     std::string image;
-    std::vector<Face> faces;
+    std::vector<shared_ptr<Face>> faces;
 } ForwarderHistroyEntry;
 
 /** \brief main class of NFD
@@ -230,7 +230,7 @@ private:
   ForwarderCounters m_counters;
 
   FaceTable m_faceTable;
-  std::map<std::string, ForwarderHistroyEntry> m_history;
+  std::vector<ForwarderHistroyEntry*> m_history;
 
   // tables
   NameTree       m_nameTree;

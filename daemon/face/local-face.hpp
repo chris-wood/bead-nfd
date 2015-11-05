@@ -179,6 +179,13 @@ LocalFace::decodeAndDispatchInput(const Block& element)
 
         this->emitSignal(onReceiveData, *d);
       }
+      else if (payload.type() == tlv::Bead)
+        {
+          shared_ptr<Bead> d = make_shared<Bead>();
+          d->wireDecode(payload);
+
+          this->emitSignal(onReceiveBead, *d);
+        }
     else
       return false;
 
