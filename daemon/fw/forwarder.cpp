@@ -104,8 +104,9 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
 
             std::cout << "searching for BEAD" << std::endl;
 
-            for (std::vector<shared_ptr<Face>>::iterator itr = entry->faces.begin(); itr != entry->faces.end(); ++itr) {
-                shared_ptr<Face> outFace = *itr;
+            for (int i = 0; i < entry->faces.size(); i++) {
+                FaceId id = entry->faces.at(i);
+                shared_ptr<Face> outFace = getFace(id);
                 outFace->sendBead(bead);
             }
 
@@ -419,12 +420,10 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
   // Extract the Content Object pre-image
   std::string token = data.getToken();
 
-  std::cout << "token == " << token << std::endl;
+  // std::cout << "token == " << token << std::endl;
 
-  // Compute H(token)
-  std::string image = SHA256HashString(token);
-
-  nfd::ForwarderHistroyEntry *entry = (nfd::ForwarderHistroyEntry *) malloc(sizeof(nfd::ForwarderHistroyEntry));
+  nfd::ForwarderHistroyEntry *entry = new nfd::ForwarderHistroyEntry();
+  entry->image = token;
 
   // foreach pending downstream
   for (std::set<shared_ptr<Face> >::iterator it = pendingDownstreams.begin();
@@ -433,15 +432,19 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
     if (pendingDownstream.get() == &inFace) {
       continue;
     }
+    if (token.length() > 0) {
+        FaceId id = pendingDownstream->getId();
+        // std::cout << "appending to face id = " << id << std::endl;
+        entry->faces.push_back(id);
+    }
     // goto outgoing Data pipeline
     this->onOutgoingData(data, *pendingDownstream);
-    if (token.length() > 0) {
-        entry->faces.push_back(pendingDownstream);
-    }
   }
 
   if (token.length() > 0) {
     m_history.push_back(entry);
+  } else {
+      delete(entry);
   }
 }
 

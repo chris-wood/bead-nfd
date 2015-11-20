@@ -47,10 +47,11 @@ class Strategy;
 
 class NullFace;
 
-typedef struct {
+class ForwarderHistroyEntry {
+public:
     std::string image;
-    std::vector<shared_ptr<Face>> faces;
-} ForwarderHistroyEntry;
+    std::vector<FaceId> faces;
+};
 
 /** \brief main class of NFD
  *
