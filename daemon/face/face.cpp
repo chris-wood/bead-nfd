@@ -44,7 +44,12 @@ Face::Face(const FaceUri& remoteUri, const FaceUri& localUri, bool isLocal, bool
   onReceiveBead    .connect([this] (const ndn::Bead&)     { ++m_counters.getNInBeads(); });
   onSendInterest   .connect([this] (const ndn::Interest&) { ++m_counters.getNOutInterests(); });
   onSendData       .connect([this] (const ndn::Data&)     { ++m_counters.getNOutDatas(); });
-  onSendBead       .connect([this] (const ndn::Bead&)     { ++m_counters.getNOutBeads(); });
+
+  // Testing it out...
+  onSendBead       .connect([this] (const ndn::Bead&)     {
+      std::cout << "WTF BEAD MANG" << std::endl;
+      ++m_counters.getNOutBeads();
+  });
 }
 
 Face::~Face()

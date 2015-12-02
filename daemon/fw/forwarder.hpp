@@ -39,6 +39,12 @@
 
 #include "ns3/ndnSIM/model/cs/ndn-content-store.hpp"
 
+#include "ns3/nstime.h"
+#include <chrono>
+
+typedef void (*ForwardingDelayCallback)(ns3::Time, float, double);
+typedef void (*BeadDropCallback)(int, uint64_t);
+
 namespace nfd {
 
 namespace fw {
@@ -67,6 +73,15 @@ public:
 
   const ForwarderCounters&
   getCounters() const;
+
+  void
+  setForwardingDelayCallback(size_t forwardingDelayCallback, size_t id);
+
+  void
+  setBeadDropCallback(size_t callback, int id);
+
+  void
+  setUseHistory();
 
 public: // faces
   FaceTable&
@@ -249,6 +264,11 @@ private:
 
   // allow Strategy (base class) to enter pipelines
   friend class fw::Strategy;
+
+  ForwardingDelayCallback m_forwardingDelayCallback;
+  BeadDropCallback m_beadDropCallback;
+  bool m_useHistory;
+  int m_id;
 };
 
 inline const ForwarderCounters&
@@ -273,6 +293,26 @@ inline void
 Forwarder::addFace(shared_ptr<Face> face)
 {
   m_faceTable.add(face);
+}
+
+inline void
+Forwarder::setForwardingDelayCallback(size_t forwardingDelayCallback, size_t id)
+{
+  m_id = id;
+  m_forwardingDelayCallback = reinterpret_cast<ForwardingDelayCallback>(forwardingDelayCallback);
+}
+
+inline void
+Forwarder::setBeadDropCallback(size_t callback, int id)
+{
+    m_beadDropCallback = reinterpret_cast<BeadDropCallback>(callback);
+    m_id = id;
+}
+
+inline void
+Forwarder::setUseHistory()
+{
+  m_useHistory = true;
 }
 
 inline void

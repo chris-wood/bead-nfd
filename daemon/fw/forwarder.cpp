@@ -65,8 +65,10 @@ Forwarder::Forwarder()
   , m_strategyChoice(m_nameTree, fw::makeDefaultStrategy(*this))
   , m_csFace(make_shared<NullFace>(FaceUri("contentstore://")))
 {
-  fw::installStrategies(*this);
-  getFaceTable().addReserved(m_csFace, FACEID_CONTENT_STORE);
+    m_forwardingDelayCallback = 0;
+    m_useHistory = false;
+    fw::installStrategies(*this);
+    getFaceTable().addReserved(m_csFace, FACEID_CONTENT_STORE);
 }
 
 Forwarder::~Forwarder()
@@ -90,31 +92,86 @@ SHA256HashString(std::string aString) {
 void
 Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
 {
-    std::string token = bead.getToken();
+    auto start = std::chrono::high_resolution_clock::now();
 
-    // std::cout << "ON BEAD!!" << std::endl;
+    if (m_useHistory) {
+        std::string token = bead.getToken();
+        ++m_counters.getNInBeads();
 
-    // Compute H(token)
-    std::string image = SHA256HashString(token);
+        const_cast<Bead&>(bead).setHops(bead.getHops() + 1);
 
-    // Lookup the entry
-    for (int i = 0; i < m_history.size(); i++) {
-        nfd::ForwarderHistroyEntry *entry = m_history.at(i);
-        if (image.compare(entry->image) == 0) {
+        // Compute H(token)
+        std::string image = SHA256HashString(token);
 
-            std::cout << "searching for BEAD" << std::endl;
+        bool sent = false;
+        // Lookup the entry
+        // std::cout << "searching for BEAD" << std::endl;
+        for (int i = 0; i < m_history.size(); i++) {
+            nfd::ForwarderHistroyEntry *entry = m_history.at(i);
+            if (image.compare(entry->image) == 0) {
 
-            for (int i = 0; i < entry->faces.size(); i++) {
-                FaceId id = entry->faces.at(i);
-                shared_ptr<Face> outFace = getFace(id);
-                outFace->sendBead(bead);
+                NFD_LOG_DEBUG("onIncomingBead FOUND MATCHING ENTRY IN HISTORY TO FORWARD BEAD");
+
+                for (int i = 0; i < entry->faces.size(); i++) {
+                    FaceId id = entry->faces.at(i);
+                    shared_ptr<Face> outFace = getFace(id);
+                    outFace->sendBead(bead);
+                    ++m_counters.getNOutBeads();
+                    sent = true;
+                }
+
+                // Drop it.
+                m_history.erase(m_history.begin() + i);
+
+                break;
             }
-
-            // Drop it.
-            m_history.erase(m_history.begin() + i);
-
-            break;
         }
+
+        if (!sent) {
+            if (m_beadDropCallback != NULL) {
+                m_beadDropCallback(m_id, bead.getHops() - 1);
+            }
+        }
+    } else { // no history, broadcast!
+
+        // Find the match in the FIB
+        // shared_ptr<fib::Entry> match = fib.findLongestPrefixMatch(bead.getName())
+
+        std::vector<FaceId> sentFaces;
+
+        for (nfd::Fib::const_iterator itr = m_fib.begin(); itr != m_fib.end(); itr++) {
+            const fib::Entry& entry = *itr;
+            Name prefix = entry.getPrefix();
+            if (!(prefix.isPrefixOf(bead.getName()))) {
+                fib::NextHopList nextHops = entry.getNextHops();
+                for (fib::NextHopList::const_iterator hopItr = nextHops.begin(); hopItr != nextHops.end(); hopItr++) {
+                    shared_ptr<Face> outFace = hopItr->getFace();
+                    FaceId id = outFace->getId();
+                    if (std::find(sentFaces.begin(), sentFaces.end(), id) != sentFaces.end()) {
+                        outFace->sendBead(bead);
+                        ++m_counters.getNOutBeads();
+                        sentFaces.push_back(id);
+                    } else {
+                        // do nothing -- we don't send to the same face twice
+                    }
+                }
+            }
+        }
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> duration = end - start;
+
+    if (m_forwardingDelayCallback != 0) {
+        // Compute the size of the history accumulated so far
+        double size = 0.0;
+        for (int i = 0; i < m_history.size(); i++) {
+            nfd::ForwarderHistroyEntry *entry = m_history.at(i);
+
+            // size is 32 (int id) bits for each face, and the preimage (a 256-bit hash)
+            size += ((32 * entry->faces.size()) + 256);
+        }
+        m_forwardingDelayCallback(ns3::Simulator::Now(), duration.count(), size);
     }
 }
 
