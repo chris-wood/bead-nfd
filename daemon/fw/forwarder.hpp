@@ -43,6 +43,7 @@
 #include <chrono>
 
 typedef void (*ForwardingDelayCallback)(ns3::Time, float, double);
+
 typedef void (*BeadDropCallback)(int, uint64_t);
 
 namespace nfd {
@@ -78,7 +79,7 @@ public:
   setForwardingDelayCallback(size_t forwardingDelayCallback, size_t id);
 
   void
-  setBeadDropCallback(size_t callback, int id);
+  setBeadDropCallback(size_t callback, size_t id);
 
   void
   setUseHistory();
@@ -303,7 +304,7 @@ Forwarder::setForwardingDelayCallback(size_t forwardingDelayCallback, size_t id)
 }
 
 inline void
-Forwarder::setBeadDropCallback(size_t callback, int id)
+Forwarder::setBeadDropCallback(size_t callback, size_t id)
 {
     m_beadDropCallback = reinterpret_cast<BeadDropCallback>(callback);
     m_id = id;

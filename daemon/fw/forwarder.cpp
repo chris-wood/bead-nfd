@@ -66,7 +66,7 @@ Forwarder::Forwarder()
   , m_csFace(make_shared<NullFace>(FaceUri("contentstore://")))
 {
     m_forwardingDelayCallback = 0;
-    m_useHistory = false;
+    m_useHistory = true;
     fw::installStrategies(*this);
     getFaceTable().addReserved(m_csFace, FACEID_CONTENT_STORE);
 }

@@ -47,7 +47,6 @@ Face::Face(const FaceUri& remoteUri, const FaceUri& localUri, bool isLocal, bool
 
   // Testing it out...
   onSendBead       .connect([this] (const ndn::Bead&)     {
-      std::cout << "WTF BEAD MANG" << std::endl;
       ++m_counters.getNOutBeads();
   });
 }
