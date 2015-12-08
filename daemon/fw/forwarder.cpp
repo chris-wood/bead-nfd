@@ -66,6 +66,7 @@ Forwarder::Forwarder()
   , m_csFace(make_shared<NullFace>(FaceUri("contentstore://")))
 {
     m_forwardingDelayCallback = 0;
+    m_historySize = 100; // random default
     m_useHistory = true;
     fw::installStrategies(*this);
     getFaceTable().addReserved(m_csFace, FACEID_CONTENT_STORE);
@@ -110,7 +111,7 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
             nfd::ForwarderHistroyEntry *entry = m_history.at(i);
             if (image.compare(entry->image) == 0) {
 
-                NFD_LOG_DEBUG("onIncomingBead FOUND MATCHING ENTRY IN HISTORY TO FORWARD BEAD");
+                std::cout << "onIncomingBead FOUND MATCHING ENTRY IN HISTORY TO FORWARD BEAD" << std::endl;
 
                 for (int i = 0; i < entry->faces.size(); i++) {
                     FaceId id = entry->faces.at(i);
@@ -128,7 +129,8 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
         }
 
         if (!sent) {
-            if (m_beadDropCallback != NULL) {
+            std::cout << "DROPPED!" << std::endl;
+            if (m_beadDropCallback != 0) {
                 m_beadDropCallback(m_id, bead.getHops() - 1);
             }
         }
@@ -171,7 +173,7 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
             // size is 32 (int id) bits for each face, and the preimage (a 256-bit hash)
             size += ((32 * entry->faces.size()) + 256);
         }
-        m_forwardingDelayCallback(ns3::Simulator::Now(), duration.count(), size);
+        m_forwardingDelayCallback(m_id, ns3::Simulator::Now(), duration.count(), size);
     }
 }
 
@@ -498,7 +500,7 @@ Forwarder::onIncomingData(Face& inFace, const Data& data)
     this->onOutgoingData(data, *pendingDownstream);
   }
 
-  if (token.length() > 0) {
+  if (token.length() > 0 && m_history.size() < m_historySize) {
     m_history.push_back(entry);
   } else {
       delete(entry);

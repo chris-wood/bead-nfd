@@ -42,7 +42,7 @@
 #include "ns3/nstime.h"
 #include <chrono>
 
-typedef void (*ForwardingDelayCallback)(ns3::Time, float, double);
+typedef void (*ForwardingDelayCallback)(size_t, ns3::Time, float, double);
 
 typedef void (*BeadDropCallback)(int, uint64_t);
 
@@ -82,7 +82,7 @@ public:
   setBeadDropCallback(size_t callback, size_t id);
 
   void
-  setUseHistory();
+  setUseHistory(size_t size);
 
 public: // faces
   FaceTable&
@@ -269,6 +269,7 @@ private:
   ForwardingDelayCallback m_forwardingDelayCallback;
   BeadDropCallback m_beadDropCallback;
   bool m_useHistory;
+  size_t m_historySize;
   int m_id;
 };
 
@@ -311,9 +312,10 @@ Forwarder::setBeadDropCallback(size_t callback, size_t id)
 }
 
 inline void
-Forwarder::setUseHistory()
+Forwarder::setUseHistory(size_t size)
 {
   m_useHistory = true;
+  m_historySize = size;
 }
 
 inline void
