@@ -44,7 +44,7 @@
 
 typedef void (*ForwardingDelayCallback)(size_t, ns3::Time, float, double);
 
-typedef void (*BeadDropCallback)(int, uint64_t);
+typedef void (*BeadDropCallback)(int, ns3::Time, uint64_t);
 
 namespace nfd {
 
@@ -79,7 +79,7 @@ public:
   setForwardingDelayCallback(size_t forwardingDelayCallback, size_t id);
 
   void
-  setBeadDropCallback(size_t callback, size_t id);
+  setBeadDropCallback(size_t callback, int id);
 
   void
   setUseHistory(size_t size);
@@ -300,12 +300,12 @@ Forwarder::addFace(shared_ptr<Face> face)
 inline void
 Forwarder::setForwardingDelayCallback(size_t forwardingDelayCallback, size_t id)
 {
-  m_id = id;
   m_forwardingDelayCallback = reinterpret_cast<ForwardingDelayCallback>(forwardingDelayCallback);
+  m_id = id;
 }
 
 inline void
-Forwarder::setBeadDropCallback(size_t callback, size_t id)
+Forwarder::setBeadDropCallback(size_t callback, int id)
 {
     m_beadDropCallback = reinterpret_cast<BeadDropCallback>(callback);
     m_id = id;

@@ -110,9 +110,6 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
         for (int i = 0; i < m_history.size(); i++) {
             nfd::ForwarderHistroyEntry *entry = m_history.at(i);
             if (image.compare(entry->image) == 0) {
-
-                std::cout << "onIncomingBead FOUND MATCHING ENTRY IN HISTORY TO FORWARD BEAD" << std::endl;
-
                 for (int i = 0; i < entry->faces.size(); i++) {
                     FaceId id = entry->faces.at(i);
                     shared_ptr<Face> outFace = getFace(id);
@@ -129,9 +126,9 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
         }
 
         if (!sent) {
-            std::cout << "DROPPED!" << std::endl;
+            // std::cout << "DROPPED  at ID=" << m_id << std::endl;
             if (m_beadDropCallback != 0) {
-                m_beadDropCallback(m_id, bead.getHops() - 1);
+                m_beadDropCallback(m_id, ns3::Simulator::Now(), bead.getHops() - 1);
             }
         }
     } else { // no history, broadcast!
