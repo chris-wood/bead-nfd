@@ -105,8 +105,11 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
         std::string image = SHA256HashString(token);
 
         bool sent = false;
+        
+        std::cout << "searching for BEAD" << std::endl;
+        std::cout << bead.getName() << std::endl;
+
         // Lookup the entry
-        // std::cout << "searching for BEAD" << std::endl;
         for (int i = 0; i < m_history.size(); i++) {
             nfd::ForwarderHistroyEntry *entry = m_history.at(i);
             if (image.compare(entry->image) == 0) {
@@ -116,6 +119,7 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
                     outFace->sendBead(bead);
                     ++m_counters.getNOutBeads();
                     sent = true;
+                    std::cout << "forwarded" << std::endl;
                 }
 
                 // Drop it.
@@ -124,6 +128,7 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
                 break;
             }
         }
+        std::cout << "done" << std::endl;
 
         if (!sent) {
             // std::cout << "DROPPED  at ID=" << m_id << std::endl;
