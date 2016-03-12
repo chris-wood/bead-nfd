@@ -135,7 +135,7 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
 
         // Find the match in the FIB
         // shared_ptr<fib::Entry> match = fib.findLongestPrefixMatch(bead.getName())
-
+        //std::cout << "broadcast!" << std::endl;
         std::vector<FaceId> sentFaces;
 
         for (nfd::Fib::const_iterator itr = m_fib.begin(); itr != m_fib.end(); itr++) {
@@ -147,6 +147,7 @@ Forwarder::onIncomingBead(Face& inFace, const Bead& bead)
                     shared_ptr<Face> outFace = hopItr->getFace();
                     FaceId id = outFace->getId();
                     if (std::find(sentFaces.begin(), sentFaces.end(), id) != sentFaces.end()) {
+                        //std::cout << "SENDING A BEAD" << std::endl;
                         outFace->sendBead(bead);
                         ++m_counters.getNOutBeads();
                         sentFaces.push_back(id);
